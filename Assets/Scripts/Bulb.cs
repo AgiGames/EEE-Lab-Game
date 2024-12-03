@@ -7,6 +7,7 @@ public class Bulb : MonoBehaviour
 
     [SerializeField] SpriteRenderer lightSprite; // sprite that represents the light bulb
     private Transform outputWireContinuation;
+    private Socket outputSocket; // wire socket that represents the output voltage
     private WireSimulator outputWireSimulator; // wire and socket that represents the output voltage of the bulb
     Transform inputWireSocket;
     private Socket inputSocket; // wire socket that represents the input voltage
@@ -20,6 +21,8 @@ public class Bulb : MonoBehaviour
 
         outputWireContinuation = transform.Find("WireContinuation");
         outputWireSimulator = outputWireContinuation.GetComponent<WireSimulator>(); // get output wire simulator
+        
+        outputSocket = outputWireContinuation.Find("WireSocket").GetComponent<Socket>();
 
         inputWireSocket = transform.Find("WireSocket");
         inputSocket = inputWireSocket.GetComponent<Socket>(); // get input socket
@@ -30,10 +33,12 @@ public class Bulb : MonoBehaviour
     void Update()
     {
 
+        outputSocket.socketVoltage = inputSocket.socketVoltage; // output voltage and input voltage will be the same
+
         // if the circuit is complete, then the light should glow
-        if (isCircuitComplete())
+        if (isCircuitComplete() && inputSocket.socketVoltage != -1)
         {
-            lightSprite.color = Color.yellow;
+            lightSprite.color = Color.yellow; // yellow = lit
         }
         else
         {
@@ -42,6 +47,7 @@ public class Bulb : MonoBehaviour
 
     }
 
+    // function to check if the circuit in which the bulb is located is complete
     bool isCircuitComplete()
     {
         Transform ithObject = inputWireSocket;

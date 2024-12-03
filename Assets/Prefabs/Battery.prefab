@@ -178,6 +178,10 @@ PrefabInstance:
       propertyPath: dontChangeSocketValue
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 3556302767199433593, guid: 731d420e16a8d5d4486ddd2455cd4a7b, type: 3}
+      propertyPath: voltageValueCannotBeChanged
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7127537727954285498, guid: 731d420e16a8d5d4486ddd2455cd4a7b, type: 3}
       propertyPath: m_Name
       value: WireContinuation
@@ -223,6 +227,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -517026770279102034, guid: 287084900d7ec32498fb78378f7cc030, type: 3}
       propertyPath: dontChangeSocketValue
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -517026770279102034, guid: 287084900d7ec32498fb78378f7cc030, type: 3}
+      propertyPath: voltageValueCannotBeChanged
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 865179043003463424, guid: 287084900d7ec32498fb78378f7cc030, type: 3}

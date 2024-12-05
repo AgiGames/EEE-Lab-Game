@@ -72,7 +72,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 2
   m_Sprite: {fileID: 21300000, guid: 417093164c79dcb498b1a877f8c860e7, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -175,4 +175,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eaead1228c931124695f172d12234d2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  preLinked: 0
+  nextConnection: {fileID: 0}
+  voltageValueCannotBeChanged: 0
   socketVoltage: -1
+  socketResistance: 0

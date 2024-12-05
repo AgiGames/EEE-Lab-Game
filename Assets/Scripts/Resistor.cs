@@ -5,6 +5,7 @@ using UnityEngine;
 public class Resistor : MonoBehaviour
 {
 
+    // prerequsisites for calculating the voltage drops, refer the prefab in the prefab view to understand more
     private Transform inputWireSocket;
     private Transform outputWireContinuation;
     private Transform outputWireSocket;
@@ -13,11 +14,14 @@ public class Resistor : MonoBehaviour
     [SerializeField]
     private Transform batteryTransform;
     private Battery battery;
-    private float resistance;
+
+
+    private float resistance; // resistance value of resistor
 
     void Start()
     {
 
+        // prerequsisites for calculating the voltage drops, refer the prefab in the prefab view to understand more
         inputWireSocket = transform.Find("WireSocket");
         outputWireContinuation = transform.Find("WireContinuation");
         outputWireSocket = outputWireContinuation.Find("WireSocket");
@@ -36,7 +40,7 @@ public class Resistor : MonoBehaviour
         {
             float current = battery.voltage / battery.equivalentResistance;
             float voltageDrop = current * resistance;
-            outputSocket.socketVoltage = inputSocket.socketVoltage - voltageDrop;
+            outputSocket.socketVoltage = inputSocket.socketVoltage - voltageDrop; // we choose the output socket to hold the resistance value
             Debug.Log($"Input Voltage: {inputSocket.socketVoltage}, Output Voltage: {outputSocket.socketVoltage}");
         }
 

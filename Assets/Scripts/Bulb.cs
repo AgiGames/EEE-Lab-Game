@@ -83,13 +83,13 @@ public class Bulb : MonoBehaviour
                     }
                     else
                     {
-                        Debug.LogWarning("jthWireSimulator.nextWireSocket is null.");
+                        //Debug.LogWarning("jthWireSimulator.nextWireSocket is null.");
                         ithObject = null;
                     }
                 }
                 else
                 {
-                    Debug.LogWarning("No wire prefab found! Parent: " + parent);
+                    //Debug.LogWarning("No wire prefab found! Parent: " + parent);
                     ithObject = null;
                 }
             }
@@ -101,7 +101,7 @@ public class Bulb : MonoBehaviour
 
         }
 
-        Debug.Log("Circuit not complete.");
+        //Debug.Log("Circuit not complete.");
         return false;
     }
 

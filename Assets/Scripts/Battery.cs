@@ -10,7 +10,7 @@ public class Battery : MonoBehaviour
     private WireSimulator outputWireSimulator; // wire and socket that represents the output voltage of the bulb
     private Transform outputWireSocket;
     private Transform inputWireSocket;
-    private Socket outputSocket;
+    private Socket outputSocket; // Socket Class object of socket of output
     public float voltage;
 
     // Start is called before the first frame update
@@ -20,11 +20,11 @@ public class Battery : MonoBehaviour
         outputWireContinuation = transform.Find("WireContinuation");
         outputWireSimulator = outputWireContinuation.GetComponent<WireSimulator>(); // get output wire simulator
         outputWireSocket = outputWireContinuation.Find("WireSocket");
-        outputSocket = outputWireSocket.GetComponent<Socket>();
+        outputSocket = outputWireSocket.GetComponent<Socket>(); // get output socket
 
         inputWireSocket = transform.Find("WireSocket");
 
-        voltage = outputSocket.socketVoltage;
+        voltage = outputSocket.socketVoltage; // voltage of the battery is stored in the output socket
 
     }
 
@@ -139,7 +139,11 @@ public class Battery : MonoBehaviour
             return 0;
         }
 
-        return socket.socketResistance + findEquivalentResistance(ithObject);
+        /*
+         * NOTE: THE FOLLOWING LINE ASSUMES THE RESISTORS ARE ONLY CONNECTED IN SERIES, 
+         * THIS WILL BE CHANGED TO WORK WITH PARALLELY CONNECTED RESISTORS IF THE REQUIREMENT ARISES
+         */
+        return socket.socketResistance + findEquivalentResistance(ithObject); // recursively call the function for the next connection, with the previous resitance being added
 
 
     }

@@ -46,9 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87fe9795b0a6ccc46a8aaa29f8491624, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  extendableWire: {fileID: 0}
-  wireSocket: {fileID: 0}
-  voltageDisplayText: {fileID: 0}
+  nextWireSocket: {fileID: 0}
 --- !u!1001 &5298942779790768855
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -111,7 +109,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6266527314191210480, guid: 287084900d7ec32498fb78378f7cc030, type: 3}
       propertyPath: m_SortingOrder
-      value: -1
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6332872237317381457, guid: 287084900d7ec32498fb78378f7cc030, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.02
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

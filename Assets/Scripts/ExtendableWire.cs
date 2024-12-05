@@ -87,7 +87,7 @@ public class ExtendableWire : MonoBehaviour
     {
 
         transform.position = newPosition; // change the position to new position
-        Vector3 direction = newPosition - startPoint; // get the direction to which the wire end must face now
+        Vector3 direction = (newPosition - startPoint) * transform.lossyScale.x; // get the direction to which the wire end must face now
 
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg; // make the sprite renderer face that specific direction
         transform.rotation = Quaternion.Euler(0, 0, angle);

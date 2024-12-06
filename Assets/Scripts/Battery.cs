@@ -5,13 +5,13 @@ using UnityEngine;
 public class Battery : MonoBehaviour
 {
 
-    public float equivalentResistance;
+    public static float equivalentResistance;
     private Transform outputWireContinuation;
     private WireSimulator outputWireSimulator; // wire and socket that represents the output voltage of the bulb
     private Transform outputWireSocket;
     private Transform inputWireSocket;
     private Socket outputSocket; // Socket Class object of socket of output
-    public float voltage;
+    public static float voltage;
 
     // Start is called before the first frame update
     void Start()

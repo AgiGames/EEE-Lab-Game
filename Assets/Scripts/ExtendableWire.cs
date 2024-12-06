@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 
@@ -13,13 +14,15 @@ public class ExtendableWire : MonoBehaviour
     public Socket connectedSocket = null;
     public bool connectionFound = false;
     private Vector3 startPoint; // starting point of the wire end, before moving
-                        // will be used to change the direction of the wire end SpriteRenderer based on how the wire has been move
+                                // will be used to change the direction of the wire end SpriteRenderer based on how the wire has been move
+    private Vector3 startingDirection;
 
     // Start is called before the first frame update
     void Start()
     {
         
         startPoint = transform.position; // get the start point of the game object
+        startingDirection = transform.right;
 
     }
 
@@ -59,6 +62,7 @@ public class ExtendableWire : MonoBehaviour
                     }
 
                     connectionFound = true;
+                    connectedSocket.hasBeenConnectedTo = true;
 
                     updateWire(wirePoint.position); // update the wire's position and rotation using the collider's transfrom position
                     return;
@@ -67,6 +71,10 @@ public class ExtendableWire : MonoBehaviour
         }
 
         connectionFound = false;
+        if (connectedSocket != null)
+        {
+            connectedSocket.hasBeenConnectedTo = false;
+        }
         connectedSocket = null;
 
         updateWire(newPosition); // update wire end's position and rotation
@@ -87,7 +95,16 @@ public class ExtendableWire : MonoBehaviour
     {
 
         transform.position = newPosition; // change the position to new position
-        Vector3 direction = (newPosition - startPoint) * transform.lossyScale.x; // get the direction to which the wire end must face now
+
+        Vector3 direction;
+        if (newPosition == startPoint)
+        {
+            direction = startingDirection;
+        }
+        else
+        {
+            direction = (newPosition - startPoint) * transform.lossyScale.x; // get the direction to which the wire end must face now
+        }
 
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg; // make the sprite renderer face that specific direction
         transform.rotation = Quaternion.Euler(0, 0, angle);

@@ -131,8 +131,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fdee3f6ca4d6ca146a25bada4d480546, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  equivalentResistance: 0
-  voltage: 0
 --- !u!1001 &1075172333586056532
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -199,7 +197,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3556302767199433593, guid: 731d420e16a8d5d4486ddd2455cd4a7b, type: 3}
       propertyPath: hasBeenConnectedTo
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3556302767199433593, guid: 731d420e16a8d5d4486ddd2455cd4a7b, type: 3}
       propertyPath: dontChangeSocketValue
@@ -213,7 +211,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: WireContinuation
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5854785784267162715, guid: 731d420e16a8d5d4486ddd2455cd4a7b, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

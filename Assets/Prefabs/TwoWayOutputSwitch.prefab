@@ -325,7 +325,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: WireContinuationUp
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5854785784267162715, guid: 731d420e16a8d5d4486ddd2455cd4a7b, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -473,7 +474,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: WireContinuationDown
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5854785784267162715, guid: 731d420e16a8d5d4486ddd2455cd4a7b, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

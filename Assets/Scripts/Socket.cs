@@ -10,6 +10,7 @@ public class Socket : MonoBehaviour
     public bool voltageValueCannotBeChanged = false; // determine if the socket voltage cannot be changed or not
     public float socketVoltage = -1; // initial socket voltage, -1 means it is disconnected from any other voltage source, which is how the socket starts
     public float socketResistance = 0;
+    public bool hasBeenConnectedTo = false;
 
     // Start is called before the first frame update1
     void Start()
@@ -21,7 +22,10 @@ public class Socket : MonoBehaviour
     void Update()
     {
   
-
+        if(hasBeenConnectedTo == false && voltageValueCannotBeChanged == false)
+        {
+            socketVoltage = -1;
+        }
 
     }
 }

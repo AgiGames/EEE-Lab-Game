@@ -11,9 +11,9 @@ public class Resistor : MonoBehaviour
     private Transform outputWireSocket;
     private Socket inputSocket;
     private Socket outputSocket;
-    [SerializeField]
-    private Transform batteryTransform;
-    private Battery battery;
+    //[SerializeField]
+    //private Transform batteryTransform;
+    //private Battery battery;
 
 
     private float resistance; // resistance value of resistor
@@ -28,7 +28,7 @@ public class Resistor : MonoBehaviour
         inputSocket = inputWireSocket.GetComponent<Socket>();   
         outputSocket = outputWireSocket.GetComponent<Socket>();
         resistance = outputSocket.socketResistance;
-        battery = batteryTransform.GetComponent<Battery>();
+        //battery = batteryTransform.GetComponent<Battery>();
 
     }
 
@@ -38,7 +38,7 @@ public class Resistor : MonoBehaviour
         
         if(inputSocket.socketVoltage != -1)
         {
-            float current = battery.voltage / battery.equivalentResistance;
+            float current = Battery.voltage / Battery.equivalentResistance;
             float voltageDrop = current * resistance;
             outputSocket.socketVoltage = inputSocket.socketVoltage - voltageDrop; // we choose the output socket to hold the resistance value
             Debug.Log($"Input Voltage: {inputSocket.socketVoltage}, Output Voltage: {outputSocket.socketVoltage}");

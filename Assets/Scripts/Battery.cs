@@ -9,9 +9,10 @@ public class Battery : MonoBehaviour
     private Transform outputWireContinuation;
     private WireSimulator outputWireSimulator; // wire and socket that represents the output voltage of the bulb
     private Transform outputWireSocket;
-    private Transform inputWireSocket;
+    public static Transform inputWireSocket;
     private Socket outputSocket; // Socket Class object of socket of output
     public static float voltage;
+    public static List<Transform> cyclicalPath;
 
     // Start is called before the first frame update
     void Start()
@@ -25,126 +26,199 @@ public class Battery : MonoBehaviour
         inputWireSocket = transform.Find("WireSocket");
 
         voltage = outputSocket.socketVoltage; // voltage of the battery is stored in the output socket
-
     }
 
     // Update is called once per frame
     void Update()
     {
 
-        if (isCircuitComplete())
+        //Debug.Log($"In Battery {outputSocket.socketVoltage}, {voltage}");
+
+        HashSet<Transform> visited = new HashSet<Transform>();
+        cyclicalPath = new List<Transform>();
+        Stack<Transform> nextSeriesConn = new Stack<Transform>();
+
+        bool result = isCircuitCompleteDFS(outputWireSocket, inputWireSocket, visited, cyclicalPath);
+        if(result == true)
         {
-            equivalentResistance = findEquivalentResistance(outputWireSocket);
+            cyclicalPath.Add(outputWireSocket);
+            float resultantResitance = findEquivalentResistanceDFS(outputWireSocket, inputWireSocket, cyclicalPath, outputSocket.socketResistance, nextSeriesConn);
+            if(resultantResitance == outputSocket.socketResistance)
+            {
+                equivalentResistance = float.PositiveInfinity;
+            }
+            else
+            {
+                equivalentResistance = resultantResitance;
+            }
         }
         else
         {
             equivalentResistance = float.PositiveInfinity;
         }
 
+        outputSocket.socketCurrent = voltage / equivalentResistance;
+        //Debug.Log(equivalentResistance);
+
     }
 
-    bool isCircuitComplete()
+    bool isCircuitCompleteDFS(Transform ithNode, Transform target, HashSet<Transform> visited, List<Transform> cyclicalPath)
     {
-        Transform ithObject = inputWireSocket;
-        HashSet<Transform> visited = new HashSet<Transform>();
 
-        while (ithObject != null)
+        //Debug.Log(ithNode.name);
+
+        if (ithNode == target)
         {
-
-            // prevent infinite loops caused by circular references
-            if (visited.Contains(ithObject))
-            {
-                Debug.LogError("Detected a circular connection!");
-                return false;
-            }
-            visited.Add(ithObject);
-
-            // assuming ithObject has Socket.cs installed, since ithObject is always the "WireSocket" prefab
-            Socket socket = ithObject.GetComponent<Socket>();
-            if (socket != null && socket.preLinked) // if it is preLinked to some other socket
-            {
-                ithObject = socket.nextConnection; // then ithObject will be that next socket
-            }
-            // if the socket is not already pre linked to some other one, we have to find to what it is connected to via its wire
-            else
-            {
-                Transform parent = ithObject.transform.parent; // get the parent object of the wire socket, from where we can access the wire's status
-                WireSimulator jthWireSimulator = parent.GetComponent<WireSimulator>(); // get the WireSimulator component which has the wire's status
-                if (jthWireSimulator != null)
-                {
-                    if (jthWireSimulator.nextWireSocket != null)
-                    {
-                        ithObject = jthWireSimulator.nextWireSocket.transform; // set ithObject to the next socket the wire is connected to
-                    }
-                    else
-                    {
-                        //Debug.LogWarning("jthWireSimulator.nextWireSocket is null.");
-                        ithObject = null;
-                    }
-                }
-                else
-                {
-                    //Debug.LogWarning("No wire prefab found! Parent: " + parent);
-                    ithObject = null;
-                }
-            }
-
-            if (ithObject == inputWireSocket) // if we have come a full circle, then the circuit is complete
-            {
-                return true;
-            }
-
+            cyclicalPath.Add(target);
+            return true;
         }
 
-        //Debug.Log("Circuit not complete.");
-        return false;
-    }
+        if (visited.Contains(ithNode))
+        {
+            return false;
+        }
 
-    private float findEquivalentResistance(Transform ithObject)
-    {
+        visited.Add(ithNode);
 
-        Socket socket = ithObject.GetComponent<Socket>();
-
+        Socket socket = ithNode.GetComponent<Socket>();
         if (socket != null && socket.preLinked)
         {
-            ithObject = socket.nextConnection; // then ithObject will be that next socket
+            //Debug.Log("hello");
+            bool result = isCircuitCompleteDFS(socket.nextConnection, target, visited, cyclicalPath);
+            if(result == true)
+            {
+                cyclicalPath.Add(socket.nextConnection);
+            }
+            return result;
         }
         else
         {
-            Transform parent = ithObject.transform.parent; // get the parent object of the wire socket, from where we can access the wire's status
-            WireSimulator jthWireSimulator = parent.GetComponent<WireSimulator>(); // get the WireSimulator component which has the wire's status
-            if (jthWireSimulator != null)
+            if (ithNode.transform.parent.GetComponent<WireSimulator>() != null)
             {
-                if (jthWireSimulator.nextWireSocket != null)
+                WireSimulator jthWireSimulator = ithNode.transform.parent.GetComponent<WireSimulator>();
+                if (jthWireSimulator != null && jthWireSimulator.nextWireSocket != null)
                 {
-                    ithObject = jthWireSimulator.nextWireSocket.transform; // set ithObject to the next socket the wire is connected to
-                }
-                else
-                {
-                    //Debug.LogWarning("jthWireSimulator.nextWireSocket is null.");
-                    ithObject = null;
+                    bool result = isCircuitCompleteDFS(jthWireSimulator.nextWireSocket.transform, target, visited, cyclicalPath);
+                    if(result == true)
+                    {
+                        cyclicalPath.Add(jthWireSimulator.nextWireSocket.transform);
+                    }
+                    return result;
                 }
             }
-            else
+            else if (ithNode.transform.parent.GetComponent<TwoWayWireSimulator>() != null)
             {
-                //Debug.LogWarning("No wire prefab found! Parent: " + parent);
-                ithObject = null;
+                TwoWayWireSimulator kthTwoWayWireSimulator = ithNode.transform.parent.GetComponent<TwoWayWireSimulator>();
+                bool pathOneResult = false;
+                HashSet<Transform> visitedPathOne = new HashSet<Transform>(visited);
+                HashSet<Transform> visitedPathTwo = new HashSet<Transform>(visited);
+                if (kthTwoWayWireSimulator != null && kthTwoWayWireSimulator.nextSocket1 != null && kthTwoWayWireSimulator.nextSocket1.transform != null)
+                {
+                    pathOneResult = isCircuitCompleteDFS(kthTwoWayWireSimulator.nextSocket1.transform, target, visitedPathOne, cyclicalPath);
+                }
+                if (pathOneResult == true)
+                {
+                    cyclicalPath.Add(kthTwoWayWireSimulator.nextSocket1.transform);
+                }
+                bool pathTwoResult = false;
+                if (kthTwoWayWireSimulator != null && kthTwoWayWireSimulator.nextSocket2 != null && kthTwoWayWireSimulator.nextSocket2.transform != null)
+                {
+                    pathTwoResult = isCircuitCompleteDFS(kthTwoWayWireSimulator.nextSocket2.transform, target, visitedPathTwo, cyclicalPath);
+                }
+                if (pathTwoResult == true)
+                {
+                    cyclicalPath.Add(kthTwoWayWireSimulator.nextSocket2.transform);
+                }
+                return pathOneResult || pathTwoResult;
             }
         }
 
-        //Debug.Log($"ithSocket EqRes: {socket.socketResistance}");
+        return false;
 
-        if (ithObject == outputWireSocket)
+    }
+
+    private float findEquivalentResistanceDFS(Transform ithNode, Transform target, List<Transform> cyclicalPath, float currentResistance, Stack<Transform> nextSeriesConn)
+    {
+
+        if (ithNode == target)
         {
-            return 0;
+            return currentResistance + ithNode.GetComponent<Socket>().socketResistance;
         }
 
-        /*
-         * NOTE: THE FOLLOWING LINE ASSUMES THE RESISTORS ARE ONLY CONNECTED IN SERIES, 
-         * THIS WILL BE CHANGED TO WORK WITH PARALLELY CONNECTED RESISTORS IF THE REQUIREMENT ARISES
-         */
-        return socket.socketResistance + findEquivalentResistance(ithObject); // recursively call the function for the next connection, with the previous resitance being added
+        Socket socket = ithNode.GetComponent<Socket>();
+        if(socket != null && socket.numInputConnections > 1)
+        {
+            //Debug.Log(socket.numInputConnections);
+            if(!nextSeriesConn.Contains(ithNode))
+            {
+                if (socket.nextConnection != null)
+                {
+                    nextSeriesConn.Push(socket.nextConnection);
+                }
+                else if(ithNode.transform.parent.GetComponent<WireSimulator>() != null)
+                {
+                    nextSeriesConn.Push(ithNode.transform.parent.GetComponent<WireSimulator>().nextWireSocket.transform);
+                }
+            }
+            return currentResistance;
+        }
 
+        if (socket != null && socket.preLinked && cyclicalPath.Contains(ithNode))
+        {
+            //Debug.Log("PreLinked");
+            currentResistance += socket.socketResistance;
+            return findEquivalentResistanceDFS(socket.nextConnection, target, cyclicalPath, currentResistance, nextSeriesConn);
+        }
+        else
+        {
+            if (ithNode.transform.parent.GetComponent<WireSimulator>() != null && cyclicalPath.Contains(ithNode))
+            {
+                //Debug.Log("Not Prelinked");
+                currentResistance += socket.socketResistance;
+                WireSimulator jthWireSimulator = ithNode.transform.parent.GetComponent<WireSimulator>();
+                if (jthWireSimulator != null && jthWireSimulator.nextWireSocket != null)
+                {
+                    return findEquivalentResistanceDFS(jthWireSimulator.nextWireSocket.transform, target, cyclicalPath, currentResistance, nextSeriesConn);
+                }
+            }
+            else if (ithNode.transform.parent.GetComponent<TwoWayWireSimulator>() != null && cyclicalPath.Contains(ithNode))
+            {
+                currentResistance += socket.socketResistance;
+                TwoWayWireSimulator kthTwoWayWireSimulator = ithNode.transform.parent.GetComponent<TwoWayWireSimulator>();
+                float pathOneResult = 0;
+                float pathTwoResult = 0;
+                if (kthTwoWayWireSimulator != null && kthTwoWayWireSimulator.nextSocket1 != null && kthTwoWayWireSimulator.nextSocket1.transform != null)
+                {
+                    pathOneResult = findEquivalentResistanceDFS(kthTwoWayWireSimulator.nextSocket1.transform, target, cyclicalPath, 0, nextSeriesConn);
+                }
+                if (kthTwoWayWireSimulator != null && kthTwoWayWireSimulator.nextSocket2 != null && kthTwoWayWireSimulator.nextSocket2.transform != null)
+                {
+                    pathTwoResult = findEquivalentResistanceDFS(kthTwoWayWireSimulator.nextSocket2.transform, target, cyclicalPath, 0, nextSeriesConn);
+                }
+
+                if(pathOneResult == 0 && pathTwoResult != 0)
+                {
+                    currentResistance += pathTwoResult;
+                }
+                else if(pathOneResult != 0 && pathTwoResult == 0)
+                {
+                    currentResistance += pathOneResult;
+                }
+                else if(pathOneResult != 0 && pathTwoResult != 0)
+                {
+                    currentResistance += (pathOneResult * pathTwoResult) / (pathOneResult + pathTwoResult);
+                }
+                //Debug.Log($"POR {pathOneResult}, PTR {pathTwoResult}");
+                //Debug.Log($"stack size {nextSeriesConn.Count}, current resistance {currentResistance}");
+                if (nextSeriesConn.Count > 0)
+                {
+                    //Debug.Log(nextSeriesConn.Peek().GetComponent<Socket>().preLinked);
+                    return findEquivalentResistanceDFS(nextSeriesConn.Pop(), target, cyclicalPath, currentResistance, nextSeriesConn);
+                }
+            }
+        }
+
+        return currentResistance;
 
     }
 

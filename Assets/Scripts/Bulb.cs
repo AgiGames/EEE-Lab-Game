@@ -1,15 +1,27 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Experimental.Rendering;
+using UnityEditor.Rendering;
 using UnityEngine;
+
+/*
+ * The GameObject to which this script is attached to is as follows:
+ * Bulb
+ *      Light (SpriteRenderer)
+ *      WireConinuation (Transform) -> represents the wire connected to a scoket using which we connect to another electrical component
+ *          Wire (Transform)
+ *          WireSocket (Transform)
+ *      WireSocket (Transform)
+ *      BulbHolder(SpriteRenderer)
+ */
 
 public class Bulb : MonoBehaviour
 {
 
     [SerializeField] SpriteRenderer lightSprite; // sprite that represents the light bulb
-    private Transform outputWireContinuation;
+    private Transform outputWireContinuation; // WireContinuation transfrom whose has children with necessary components
     private Socket outputSocket; // wire socket that represents the output voltage
-    private WireSimulator outputWireSimulator; // wire and socket that represents the output voltage of the bulb
-    Transform inputWireSocket;
+    Transform inputWireSocket; // WireSocket transform whose children has necessary components
     private Socket inputSocket; // wire socket that represents the input voltage
     Color startingLightColour; // starting colour of the light (colour for off state)
     
@@ -20,7 +32,6 @@ public class Bulb : MonoBehaviour
         startingLightColour = lightSprite.color; // save the starting colour
 
         outputWireContinuation = transform.Find("WireContinuation");
-        outputWireSimulator = outputWireContinuation.GetComponent<WireSimulator>(); // get output wire simulator
         
         outputSocket = outputWireContinuation.Find("WireSocket").GetComponent<Socket>();
 
@@ -33,10 +44,16 @@ public class Bulb : MonoBehaviour
     void Update()
     {
 
+        Debug.Log($"bulb {inputSocket.socketVoltage}");
+        //Debug.Log(inputSocket.hasBeenConnectedTo);
+
         outputSocket.socketVoltage = inputSocket.socketVoltage; // output voltage and input voltage will be the same
+        outputSocket.socketCurrent = inputSocket.socketCurrent;
+        
+        HashSet<Transform> visited = new HashSet<Transform>();
 
         // if the circuit is complete, then the light should glow
-        if (isCircuitComplete() && inputSocket.socketVoltage != -1)
+        if (inputSocket.socketVoltage != -1 && isCircuitCompleteDFS(outputWireContinuation.Find("WireSocket"), inputWireSocket, visited))
         {
             lightSprite.color = Color.yellow; // yellow = lit
         }
@@ -47,63 +64,60 @@ public class Bulb : MonoBehaviour
 
     }
 
-    // function to check if the circuit in which the bulb is located is complete
-    bool isCircuitComplete()
+    bool isCircuitCompleteDFS(Transform ithNode, Transform target, HashSet<Transform> visited)
     {
-        Transform ithObject = inputWireSocket;
-        HashSet<Transform> visited = new HashSet<Transform>();
 
-        while (ithObject != null)
+        //Debug.Log(ithNode.name);
+
+        if (ithNode == target)
         {
-
-            // prevent infinite loops caused by circular references
-            if (visited.Contains(ithObject))
-            {
-                Debug.LogError("Detected a circular connection!");
-                return false;
-            }
-            visited.Add(ithObject);
-
-            // assuming ithObject has Socket.cs installed, since ithObject is always the "WireSocket" prefab
-            Socket socket = ithObject.GetComponent<Socket>();
-            if (socket != null && socket.preLinked) // if it is preLinked to some other socket
-            {
-                ithObject = socket.nextConnection; // then ithObject will be that next socket
-            }
-            // if the socket is not already pre linked to some other one, we have to find to what it is connected to via its wire
-            else
-            {
-                Transform parent = ithObject.transform.parent; // get the parent object of the wire socket, from where we can access the wire's status
-                WireSimulator jthWireSimulator = parent.GetComponent<WireSimulator>(); // get the WireSimulator component which has the wire's status
-                if (jthWireSimulator != null)
-                {
-                    if (jthWireSimulator.nextWireSocket != null)
-                    {
-                        ithObject = jthWireSimulator.nextWireSocket.transform; // set ithObject to the next socket the wire is connected to
-                    }
-                    else
-                    {
-                        //Debug.LogWarning("jthWireSimulator.nextWireSocket is null.");
-                        ithObject = null;
-                    }
-                }
-                else
-                {
-                    //Debug.LogWarning("No wire prefab found! Parent: " + parent);
-                    ithObject = null;
-                }
-            }
-
-            if(ithObject == inputWireSocket) // if we have come a full circle, then the circuit is complete
-            {
-                return true;
-            }
-
+            return true;
         }
 
-        //Debug.Log("Circuit not complete.");
-        return false;
-    }
+        if(visited.Contains(ithNode))
+        {
+            return false;
+        }
 
+        visited.Add(ithNode);
+
+        Socket socket = ithNode.GetComponent<Socket>();
+        if (socket != null && socket.preLinked)
+        {
+            //Debug.Log("hello");
+            return isCircuitCompleteDFS(socket.nextConnection, target, visited);
+        }
+        else
+        {
+            if (ithNode.transform.parent.GetComponent<WireSimulator>() != null)
+            {
+                WireSimulator jthWireSimulator = ithNode.transform.parent.GetComponent<WireSimulator>();
+                if (jthWireSimulator != null && jthWireSimulator.nextWireSocket != null)
+                {
+                    return isCircuitCompleteDFS(jthWireSimulator.nextWireSocket.transform, target, visited);
+                }
+            }
+            else if (ithNode.transform.parent.GetComponent<TwoWayWireSimulator>() != null)
+            {
+                TwoWayWireSimulator kthTwoWayWireSimulator = ithNode.transform.parent.GetComponent<TwoWayWireSimulator>();
+                bool pathOneResult = false;
+                if (kthTwoWayWireSimulator != null && kthTwoWayWireSimulator.nextSocket1 != null && kthTwoWayWireSimulator.nextSocket1.transform != null)
+                {
+                    pathOneResult =  isCircuitCompleteDFS(kthTwoWayWireSimulator.nextSocket1.transform, target, visited);
+                }
+                if (pathOneResult)
+                {
+                    return pathOneResult;
+                }
+                else if (!pathOneResult && kthTwoWayWireSimulator != null && kthTwoWayWireSimulator.nextSocket2 != null && kthTwoWayWireSimulator.nextSocket2.transform != null)
+                {
+                    return pathOneResult || isCircuitCompleteDFS(kthTwoWayWireSimulator.nextSocket2.transform, target, visited);
+                }
+            }
+        }
+
+        return false;
+
+    }
 
 }

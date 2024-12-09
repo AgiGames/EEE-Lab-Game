@@ -34,9 +34,10 @@ public class WireSimulator : MonoBehaviour
 
         nextWireSocket = extendableWire.connectedSocket;
         // connected socket voltage will be same as current socket voltage
-        if (nextWireSocket != null && nextWireSocket.voltageValueCannotBeChanged == false)
+        if (nextWireSocket != null && nextWireSocket.voltageValueCannotBeChanged == false && nextWireSocket.numInputConnections <= 1)
         {
             nextWireSocket.socketVoltage = currentWireSocket.socketVoltage;
+            nextWireSocket.socketCurrent = currentWireSocket.socketCurrent;
         }
 
     }

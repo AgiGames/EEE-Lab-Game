@@ -48,6 +48,7 @@ public class TwoWayOutputSwitch : MonoBehaviour
         inputSocket = inputWireSocket.GetComponent<Socket>();
         inputSocket.preLinked = true; // so put preLinked to true
         inputSocket.nextConnection = outputWireSocketUp; // set connection to upper socket prefab
+        outputSocketUp.numInputConnections++;
 
         // make the offSprite visible, and onSprite transparent
         Color color = offSprite.color;
@@ -65,6 +66,7 @@ public class TwoWayOutputSwitch : MonoBehaviour
     {
 
         outputSocketUp.socketVoltage = outputSocketDown.socketVoltage = inputSocket.socketVoltage;
+        outputSocketUp.socketCurrent = outputSocketDown.socketCurrent = inputSocket.socketCurrent;
 
     }
 
@@ -86,8 +88,10 @@ public class TwoWayOutputSwitch : MonoBehaviour
             onSprite.color = color;
 
             inputSocket.nextConnection = outputWireSocketDown;
+            outputSocketDown.numInputConnections++;
+            outputSocketUp.numInputConnections--;
         }
-        // else make onsSprite transparent and offSprite visible
+        // else make onSprite transparent and offSprite visible
         else
         {
             Color color = offSprite.color;
@@ -99,6 +103,8 @@ public class TwoWayOutputSwitch : MonoBehaviour
             onSprite.color = color;
 
             inputSocket.nextConnection = outputWireSocketUp;
+            outputSocketUp.numInputConnections++;
+            outputSocketDown.numInputConnections--;
         }
 
     }

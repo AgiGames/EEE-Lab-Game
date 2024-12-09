@@ -313,6 +313,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3556302767199433593, guid: 731d420e16a8d5d4486ddd2455cd4a7b, type: 3}
+      propertyPath: numInputConnections
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7127537727954285498, guid: 731d420e16a8d5d4486ddd2455cd4a7b, type: 3}
       propertyPath: m_Name
       value: WireContinuation

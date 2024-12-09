@@ -9,8 +9,9 @@ public class Socket : MonoBehaviour
     public Transform nextConnection = null; // next socket to which it is connected via a wire
     public bool voltageValueCannotBeChanged = false; // determine if the socket voltage cannot be changed or not
     public float socketVoltage = -1; // initial socket voltage, -1 means it is disconnected from any other voltage source, which is how the socket starts
-    public float socketResistance = 0;
-    public bool hasBeenConnectedTo = false;
+    public float socketResistance = 0; // resistance of the socket
+    public float numInputConnections = 0;
+    public float socketCurrent = 0;
 
     // Start is called before the first frame update1
     void Start()
@@ -21,11 +22,9 @@ public class Socket : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-  
-        if(hasBeenConnectedTo == false && voltageValueCannotBeChanged == false)
-        {
-            socketVoltage = -1;
-        }
+
+        //Debug.Log(socketVoltage);
+        //Debug.Log(numInputConnections);
 
     }
 }

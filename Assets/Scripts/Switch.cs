@@ -44,6 +44,11 @@ public class Switch : MonoBehaviour
     void Update()
     {
 
+        //Debug.Log(inputSocket.socketVoltage);
+        outputSocket.socketVoltage = inputSocket.socketVoltage;
+        outputSocket.socketCurrent = inputSocket.socketCurrent;
+        //Debug.Log(outputSocket.socketVoltage);
+
     }
 
     private void OnMouseDown()
@@ -63,11 +68,7 @@ public class Switch : MonoBehaviour
             color = onSprite.color;
             color.a = Mathf.Clamp01(1);
             onSprite.color = color;
-
-            if(inputSocket.socketVoltage != -1)
-            {
-                outputSocket.socketVoltage = inputSocket.socketVoltage;
-            }
+            outputSocket.numInputConnections++;
 
         }
         // else make onsSprite transparent and offSprite visible
@@ -80,6 +81,8 @@ public class Switch : MonoBehaviour
             color = onSprite.color;
             color.a = Mathf.Clamp01(0);
             onSprite.color = color;
+            outputSocket.numInputConnections--;
+
         }
 
     }

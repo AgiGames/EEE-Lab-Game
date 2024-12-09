@@ -69,11 +69,13 @@ public class TwoWayInputSwitch : MonoBehaviour
         if(!on)
         {
             outputSocket.socketVoltage = inputSocketUp.socketVoltage;
+            outputSocket.socketCurrent = inputSocketUp.socketCurrent;
         }
         // if on, socket volrage of the lower input socket will be the voltage of the output socket
         else
         {
             outputSocket.socketVoltage = inputSocketDown.socketVoltage;
+            outputSocket.socketCurrent = inputSocketDown.socketCurrent;
         }
 
     }

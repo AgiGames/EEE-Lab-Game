@@ -2,51 +2,64 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Resistor : MonoBehaviour
+public class TwoWayWireSimulator : MonoBehaviour
 {
 
-    // prerequsisites for calculating the voltage drops, refer the prefab in the prefab view to understand more
-    private Transform inputWireSocket;
-    private Transform outputWireContinuation;
-    private Transform outputWireSocket;
-    private Socket inputSocket;
-    private Socket outputSocket;
-    //[SerializeField]
-    //private Transform batteryTransform;
-    //private Battery battery;
+    ExtendableWire extendableWire1;
+    ExtendableWire extendableWire2;
+    private Socket currentSocket; // socket component from child
+    public Socket nextSocket1; // socket to which the wire will connect to
+    public Socket nextSocket2;
 
-
-    private float resistance; // resistance value of resistor
-
+    // Start is called before the first frame update
     void Start()
     {
-
-        // prerequsisites for calculating the voltage drops, refer the prefab in the prefab view to understand more
-        inputWireSocket = transform.Find("WireSocket");
-        outputWireContinuation = transform.Find("WireContinuation");
-        outputWireSocket = outputWireContinuation.Find("WireSocket");
-        inputSocket = inputWireSocket.GetComponent<Socket>();   
-        outputSocket = outputWireSocket.GetComponent<Socket>();
-        resistance = outputSocket.socketResistance;
-        //battery = batteryTransform.GetComponent<Battery>();
+        
+        extendableWire1 = transform.Find("WireOne").GetComponentInChildren<ExtendableWire>();
+        extendableWire2 = transform.Find("WireTwo").GetComponentInChildren<ExtendableWire>();
+        currentSocket = transform.Find("WireSocket").GetComponent<Socket>();
 
     }
 
     // Update is called once per frame
     void Update()
     {
-        outputSocket.socketCurrent = inputSocket.socketCurrent;
-        if(inputSocket.socketVoltage != -1)
+
+        //Debug.Log(currentWireSocket.socketVoltage);
+
+        nextSocket1 = extendableWire1.connectedSocket;
+        nextSocket2 = extendableWire2.connectedSocket;
+
+        if(nextSocket1 != null && nextSocket1.voltageValueCannotBeChanged == false && nextSocket2 == null)
+        {
+            //Debug.Log("Connected");
+            nextSocket1.socketVoltage = currentSocket.socketVoltage;
+            nextSocket1.socketCurrent = currentSocket.socketCurrent;
+        }
+
+        if (nextSocket2 != null && nextSocket2.voltageValueCannotBeChanged == false && nextSocket1 == null)
+        {
+            nextSocket2.socketVoltage = currentSocket.socketVoltage;
+            nextSocket2.socketCurrent = currentSocket.socketCurrent;
+        }
+
+        if(nextSocket1 != null && nextSocket1.voltageValueCannotBeChanged == false && nextSocket2 != null && nextSocket2.voltageValueCannotBeChanged == false)
         {
             Stack<Transform> nextSeriesConn = new Stack<Transform>();
-            float equivalentResistance = findEquivalentResistanceDFS(outputWireSocket, Battery.inputWireSocket, Battery.cyclicalPath, outputSocket.socketResistance, nextSeriesConn);
-            float current = inputSocket.socketCurrent;
-            //Debug.Log($"Current {current}, Voltage {Battery.voltage}, Er {Battery.equivalentResistance}");
-            float voltageDrop = current * resistance;
-            outputSocket.socketVoltage = inputSocket.socketVoltage - voltageDrop; // we choose the output socket to hold the resistance value
-            //Debug.Log($"Current: {current}, Resistance: {resistance}");
-            //Debug.Log($"Input Voltage: {inputSocket.socketVoltage}, Output Voltage: {outputSocket.socketVoltage}");
+            float pathOneResult = findEquivalentResistanceDFS(extendableWire1.connectedSocket.transform, Battery.inputWireSocket, Battery.cyclicalPath, 0, nextSeriesConn);
+            float pathTwoResult = findEquivalentResistanceDFS(extendableWire2.connectedSocket.transform, Battery.inputWireSocket, Battery.cyclicalPath, 0, nextSeriesConn);
+
+            float pathOneCurrentFactor = pathOneResult / (pathOneResult + pathTwoResult);
+            float pathTwoCurrentFactor = 1 - pathOneCurrentFactor;
+
+            nextSocket1.socketCurrent = pathOneCurrentFactor * currentSocket.socketCurrent;
+            nextSocket2.socketCurrent = pathTwoCurrentFactor * currentSocket.socketCurrent;
+
+            nextSocket1.socketVoltage = currentSocket.socketVoltage;
+            nextSocket2.socketVoltage = currentSocket.socketVoltage;
         }
+
+        //Debug.Log(currentWireSocket.socketVoltage);
 
     }
 

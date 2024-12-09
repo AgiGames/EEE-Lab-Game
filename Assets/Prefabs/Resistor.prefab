@@ -395,6 +395,7 @@ MonoBehaviour:
   voltageValueCannotBeChanged: 0
   socketVoltage: -1
   socketResistance: 0
+  numInputConnections: 0
 --- !u!1 &4966833462629472179
 GameObject:
   m_ObjectHideFlags: 0
@@ -529,6 +530,7 @@ MonoBehaviour:
   voltageValueCannotBeChanged: 0
   socketVoltage: -1
   socketResistance: 100
+  numInputConnections: 1
 --- !u!1 &6433423293363689080
 GameObject:
   m_ObjectHideFlags: 0
@@ -995,7 +997,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e3e9d5e736c1e54a8dd3f86f2c8a8d4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  batteryTransform: {fileID: 0}
 --- !u!1 &8972724487861894272
 GameObject:
   m_ObjectHideFlags: 0

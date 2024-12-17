@@ -5,10 +5,10 @@ Was made in ARCore Unity project preset.
 
 We recommend importing only the following folders if you want to replicate it in your project:
 
-Scenes
-
-Prefabs
-
-ModelsAndMaterials
-
-Scripts
+     -> Scenes
+        
+     -> Prefabs
+        
+     -> ModelsAndMaterials
+        
+     -> Scripts

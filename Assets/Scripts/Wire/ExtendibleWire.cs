@@ -16,12 +16,9 @@ public class ExtendibleWire : PressInputBase
 
     [SerializeField] private Transform moving; // The part that will be moved
     /// <summary>
-    /// The 3D model, who has diferent pivot location when compared to moving transform
-    /// moving is parent of moving3DModel
-    /// moving3DModel's position will be used to make sure that the wire when dragged does not move in on its start point
-    /// causing it to look ugly
+    /// Moving's position will be used to make sure that the wire when dragged does not move in on its start point causing it to look ugly
     /// </summary>
-    [SerializeField] private Transform moving3DModel;
+    private Vector3 movingStartingPosition;
 
     private bool isDragging; // To check if wireEnd is being dragged
 
@@ -32,7 +29,8 @@ public class ExtendibleWire : PressInputBase
     private float fixedYPosition;
 
     /// <summary>
-    /// Starting point of the wireEnd transform, before moving, will be the position of a prefab called wirePoint
+    /// Starting point of the line that will be drawn using the line renderer component which represents the wire,
+    /// Will be the position of a prefab called wirePoint
     /// Will be used to change the facing direction of the wireEnd transform based on how the wireEnd has been moved
     /// </summary>
     [SerializeField] private Transform wirePoint;
@@ -42,7 +40,9 @@ public class ExtendibleWire : PressInputBase
     private LineRenderer lineRenderer;
     [SerializeField] private Transform[] points; // Points between which the line will be drawn
 
-    float positionClampThreshold; // we will need this to stop the movement of wireEnd if it gets below some threshold which we calculate later
+    float positionClampThreshold; // we will need this to stop the movement of wireEnd if it's position gets below some threshold which we calculate later
+
+    bool connectionFound = false; // if a connection is found to some other wirePoint, false at start
 
     protected override void Awake()
     {
@@ -56,9 +56,9 @@ public class ExtendibleWire : PressInputBase
 
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.positionCount = points.Length;
-        DrawLine();
 
-        positionClampThreshold = Mathf.Abs((moving3DModel.position.z - startingPoint.z)) + 0.15f; // this value was found experimentally
+        movingStartingPosition = moving.position;
+        positionClampThreshold = (movingStartingPosition - wirePoint.position).magnitude;
     }
 
     protected override void OnPressBegan(Vector3 position)
@@ -76,6 +76,7 @@ public class ExtendibleWire : PressInputBase
 
     private void Update()
     {
+        DrawLine();
         if (moving != null && isDragging && activeContext.HasValue)
         {
             // Use activeContext to get the current pointer position
@@ -87,30 +88,36 @@ public class ExtendibleWire : PressInputBase
             if (Physics.Raycast(ray, out RaycastHit hit))
             {
                 Vector3 newPosition = new Vector3(hit.point.x, fixedYPosition, hit.point.z);
-                if (!(Mathf.Abs(newPosition.x - startingPoint.x) < positionClampThreshold && Mathf.Abs(newPosition.z - startingPoint.z) < positionClampThreshold))
+
+                Collider[] colliders = Physics.OverlapSphere(newPosition, .05f);
+                foreach (Collider collider in colliders)
                 {
-                    moving.position = newPosition; // Update wireEnd position
+                    if (collider.gameObject.name == "WirePoint" && collider.gameObject != wirePoint)
+                    {
+                        Transform wirePoint = collider.transform;
+                        Debug.Log(wirePoint.name);
+                        Debug.Log(wirePoint.position);
+                        connectionFound = true;
+
+                        UpdateWire(wirePoint.position);
+                        return;
+                    }
                 }
 
-                // Calculate direction from the starting point to the new position
-                Vector3 direction = newPosition - startingPoint;
-
-                // Apply rotation using Quaternion.LookRotation to face the direction
-                if (direction.sqrMagnitude > 0.0001f) // Avoid a zero-length vector
-                {
-                    Quaternion targetRotation = Quaternion.LookRotation(direction);
-                    transform.rotation = targetRotation;
-                }
+                UpdateWire(newPosition);
+                connectionFound = false;
             }
 
-            DrawLine();
         }
-
     }
 
     protected override void OnPressCancel()
     {
         isDragging = false; // Stop dragging
+        if(!connectionFound)
+        {
+            UpdateWire(movingStartingPosition);
+        }
     }
 
     public void DrawLine()
@@ -119,6 +126,47 @@ public class ExtendibleWire : PressInputBase
         for (int i = 0; i < points.Length; i++)
         {
             lineRenderer.SetPosition(i, points[i].position);
+        }
+    }
+
+    public void UpdateWire(Vector3 newPosition)
+    {
+
+        /// <summary>
+        /// If the newPoisiton that is sent as argument to the function is the same as starting point,
+        /// It means that the drag has been stopped and no connection has been found, therefore
+        /// We must reset the position to how it was at the start
+        /// </summary>
+
+        if (newPosition == movingStartingPosition)
+        {
+            moving.position = newPosition;
+        }
+
+        /// <summary>
+        /// Only if the new position is not below the threshold, then we go ahead with the movement to the new position
+        /// This was done to maintain immersion when moving the wire, by stopping clipping with its WirePoint 3D Model
+        /// This was purely done for visual purposes
+        /// </ summary >
+
+        else if (!((startingPoint - newPosition).magnitude <= positionClampThreshold))
+        {
+            moving.position = newPosition; // Update wireEnd position
+        }
+
+        else
+        {
+            moving.position = movingStartingPosition;
+        }
+
+        // Calculate direction from the starting point to the new position
+        Vector3 direction = newPosition - startingPoint;
+
+        // Apply rotation using Quaternion.LookRotation to face the direction
+        if (direction.sqrMagnitude > 0.0001f) // Avoid a zero-length vector
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            transform.rotation = targetRotation;
         }
     }
 }

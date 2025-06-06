@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
 using UnityEngine.InputSystem;
+using UnityEngine.XR.Interaction.Toolkit.Locomotion;
+using UnityEngine.EventSystems;
+using TMPro;
 
 /// <summary>
 /// For tutorial video, see this YouTube channel: <seealso href="https://www.youtube.com/@xiennastudio">YouTube channel</seealso>
@@ -24,6 +27,10 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(ARRaycastManager))]
 public class PlaceOnPlane : PressInputBase
 {
+    [SerializeField] TextMeshProUGUI placeText;
+
+    public static float xRotation = -90;
+
     /// <summary>
     /// The prefab that will be instantiated on touch.
     /// </summary>
@@ -44,6 +51,9 @@ public class PlaceOnPlane : PressInputBase
     ARRaycastManager aRRaycastManager;
     List<ARRaycastHit> hits = new List<ARRaycastHit>();
 
+    private float initialDistance = 0;
+    public static Vector3 initialScale = Vector3.one;
+
     protected override void Awake()
     {
         base.Awake();
@@ -52,18 +62,39 @@ public class PlaceOnPlane : PressInputBase
 
     protected override void OnPress(Vector3 position)
     {
+        if (IsPointerOverUIObject()) return;
+
         if (aRRaycastManager.Raycast(position, hits, TrackableType.PlaneWithinPolygon) && !prefabPlaced)
         {
-            // Raycast hits are sorted by distance, so the first hit means the closest.
             var hitPose = hits[0].pose;
 
-            // Check if there is already spawned object. If there is none, instantiated the prefab.
+            // Keep the prefab's original rotation.
+            Quaternion initialRotation = Quaternion.Euler(xRotation, 0f, 0f);
+
             if (spawnedObject == null)
             {
-                spawnedObject = Instantiate(placedPrefab, hitPose.position + new Vector3(0, 0.1f, 0), hitPose.rotation);
+                // Instantiate the object with its initial rotation.
+                spawnedObject = Instantiate(placedPrefab, hitPose.position + new Vector3(0, 0.1f, 0), initialRotation);
+                Destroy(placeText, 0f);
+
+                // Scale down to 50%.
+                spawnedObject.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+                initialScale = spawnedObject.transform.localScale;
             }
 
             prefabPlaced = true;
         }
+    }
+    private bool IsPointerOverUIObject()
+    {
+        PointerEventData pointerEventData = new PointerEventData(EventSystem.current)
+        {
+            position = Input.mousePosition
+        };
+
+        var results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(pointerEventData, results);
+
+        return results.Count > 0; // If there's any UI element under the pointer
     }
 }

@@ -87,8 +87,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.1, y: 0.1, z: 0.2}
-  m_Center: {x: 0, y: 0, z: -0.03}
+  m_Size: {x: 0.2, y: 0.2, z: 0.3}
+  m_Center: {x: 0, y: 0, z: -0.07}
 --- !u!114 &5189480208188551289
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -102,11 +102,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moving: {fileID: 6061919570016853605}
-  moving3DModel: {fileID: 2838459386297892478}
-  wirePoint: {fileID: 6915121758786834695}
+  wirePointTransform: {fileID: 6915121758786834695}
   points:
   - {fileID: 6915121758786834695}
   - {fileID: 2838459386297892478}
+  blockedWirePoint: {fileID: 0}
+  disconnectedWireColor: {r: 1, g: 0, b: 0, a: 1}
+  connectedWireColor: {r: 0, g: 1, b: 0, a: 1}
+  wireGameObject: {fileID: 3184022299910661316}
+  wireSpark: {fileID: 8300000, guid: 3f9f31c4f02b35b4288e67cf1ac8d96a, type: 3}
 --- !u!120 &5410378891641949590
 LineRenderer:
   serializedVersion: 2
@@ -162,8 +166,8 @@ LineRenderer:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 0.013317108
-        value: 0.02153778
+        time: 0
+        value: 0.015388489
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -290,6 +294,12 @@ PrefabInstance:
 --- !u!4 &2838459386297892478 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6334e750e7821864b88313cbe0dfd8d5,
+    type: 3}
+  m_PrefabInstance: {fileID: 2372977783058323861}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &3184022299910661316 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 6334e750e7821864b88313cbe0dfd8d5,
     type: 3}
   m_PrefabInstance: {fileID: 2372977783058323861}
   m_PrefabAsset: {fileID: 0}

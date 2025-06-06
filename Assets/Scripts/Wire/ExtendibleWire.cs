@@ -1,5 +1,7 @@
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections;
 
 /// <summary>
 /// Script will define how to extend the wire when it is dragged:
@@ -30,19 +32,38 @@ public class ExtendibleWire : PressInputBase
 
     /// <summary>
     /// Starting point of the line that will be drawn using the line renderer component which represents the wire,
-    /// Will be the position of a prefab called wirePoint
+    /// Will be the position of a prefab called WirePoint
     /// Will be used to change the facing direction of the wireEnd transform based on how the wireEnd has been moved
     /// </summary>
-    [SerializeField] private Transform wirePoint;
+    [SerializeField] private Transform wirePointTransform;
     private Vector3 startingPoint;
 
     // LineRenderer component to visualize the line
     private LineRenderer lineRenderer;
     [SerializeField] private Transform[] points; // Points between which the line will be drawn
 
-    float positionClampThreshold; // we will need this to stop the movement of wireEnd if it's position gets below some threshold which we calculate later
+    float positionClampThreshold; // We will need this to stop the movement of wireEnd if it's position gets below some threshold which we calculate later
 
-    bool connectionFound = false; // if a connection is found to some other wirePoint, false at start
+    bool connectionFound = false; // If a connection is found to some other wirePoint, false at start
+
+    private WirePoint wirePoint; // Wire point Class object of the wire point from which this wire originates
+    private WirePoint connectedWirePoint; // Wire point Class object of the wire point to which this wire will connect to
+    private Transform connectedWirePointTransform;
+
+    [SerializeField] private Transform blockedWirePoint; // Wire point transform that this wire is not allowed to connect to
+
+    [SerializeField] private Color disconnectedWireColor = Color.red;
+    [SerializeField] private Color connectedWireColor = Color.green;
+
+    [SerializeField] private GameObject wireGameObject;
+    private Renderer wireRenderer;
+    Material[] wireMaterials;
+    Material wireBodyMaterial;
+
+    [SerializeField] private AudioClip wireSpark;
+    private AudioSource sparkAudioSource;
+
+    private bool ignoreInput = false;
 
     protected override void Awake()
     {
@@ -52,13 +73,33 @@ public class ExtendibleWire : PressInputBase
 
     public void Start()
     {
-        startingPoint = wirePoint.position;
+        OnScaleEnable();
+
+        startingPoint = wirePointTransform.position;
 
         lineRenderer = GetComponent<LineRenderer>();
         lineRenderer.positionCount = points.Length;
 
         movingStartingPosition = moving.position;
-        positionClampThreshold = (movingStartingPosition - wirePoint.position).magnitude;
+        // positionClampThreshold = (movingStartingPosition - wirePointTransform.position).magnitude;
+
+        wirePoint = wirePointTransform.GetComponent<WirePoint>();
+
+        wireRenderer = wireGameObject.GetComponentInChildren<Renderer>();
+
+        wireMaterials = wireRenderer.materials;
+        wireBodyMaterial = wireMaterials[1];
+
+        if (disconnectedWireColor == default)
+            disconnectedWireColor = Color.red;
+
+        if (connectedWireColor == default)
+            connectedWireColor = Color.green;
+
+        if(sparkAudioSource == null)
+        {
+            sparkAudioSource = transform.AddComponent<AudioSource>();
+        }
     }
 
     protected override void OnPressBegan(Vector3 position)
@@ -76,8 +117,9 @@ public class ExtendibleWire : PressInputBase
 
     private void Update()
     {
+        UpdateLineWidth();
         DrawLine();
-        if (moving != null && isDragging && activeContext.HasValue)
+        if (moving != null && isDragging && activeContext.HasValue && !ignoreInput)
         {
             // Use activeContext to get the current pointer position
             Vector3 currentPosition = activeContext.Value.control.device is Pointer device ? device.position.ReadValue() : Vector3.zero;
@@ -89,26 +131,95 @@ public class ExtendibleWire : PressInputBase
             {
                 Vector3 newPosition = new Vector3(hit.point.x, fixedYPosition, hit.point.z);
 
-                Collider[] colliders = Physics.OverlapSphere(newPosition, .05f);
+                Collider[] colliders = Physics.OverlapSphere(newPosition, .05f * (transform.lossyScale.y));
                 foreach (Collider collider in colliders)
                 {
-                    if (collider.gameObject.name == "WirePoint" && collider.gameObject != wirePoint)
+                    if (collider.gameObject.name.StartsWith("WirePoint") && collider.transform != wirePointTransform && collider.transform != blockedWirePoint)
                     {
-                        Transform wirePoint = collider.transform;
-                        Debug.Log(wirePoint.name);
-                        Debug.Log(wirePoint.position);
-                        connectionFound = true;
+                        connectedWirePointTransform = collider.transform;
+                        ///Debug.Log(connectedWirePointTransform.name);
+                        ///Debug.Log(connectedWirePointTransform.position);
 
-                        UpdateWire(wirePoint.position);
-                        return;
+                        if (connectedWirePointTransform != null)
+                        {
+                            connectedWirePoint = connectedWirePointTransform.GetComponent<WirePoint>();
+                            if (connectedWirePoint != null)
+                            {
+                                if (connectionFound == false)
+                                {
+                                    connectedWirePoint.numInputConnections++;
+                                    if (connectedWirePoint.voltageValueCannotBeChanged == false)
+                                    {
+                                        connectedWirePoint.wirePointVoltage = wirePoint.wirePointVoltage;
+                                    }
+                                    connectedWirePoint.wirePointCurrent = wirePoint.wirePointCurrent;
+
+                                    // Play the wireSpark sound ONCE when the connection is found
+                                    if (!sparkAudioSource.isPlaying)
+                                    {
+                                        sparkAudioSource.clip = wireSpark;
+                                        sparkAudioSource.Play();
+                                    }
+                                    StartCoroutine(IgnoreTouchInput(0.5f));
+                                }
+                                if (connectionFound == false)
+                                {
+                                    wirePoint.AddConnection(connectedWirePointTransform);
+                                }
+                                connectionFound = true;
+                            }
+                            lineRenderer.material.color = connectedWireColor;
+                            wireBodyMaterial.color = connectedWireColor;
+                            UpdateWire(connectedWirePointTransform.position);
+                            return;
+                        }
                     }
                 }
 
-                UpdateWire(newPosition);
-                connectionFound = false;
-            }
+                // If the function has not returned a value before this line, then it means a connection has not been found
+                if (connectionFound == true && connectedWirePoint != null)
+                {
+                    connectedWirePoint.numInputConnections--;
+                }
+                connectionFound = false; // Thus set connectionFound to false
 
+                if (connectedWirePoint != null && connectedWirePoint.voltageValueCannotBeChanged == false) // if a connection was previously found, but now the connection is removed
+                {
+                    connectedWirePoint.wirePointVoltage = -1;
+                }
+                if (connectedWirePoint != null)
+                {
+                    connectedWirePoint.wirePointCurrent = 0;
+                }
+                if(connectedWirePointTransform != null)
+                    wirePoint.RemoveConnection(connectedWirePointTransform);
+
+                wireBodyMaterial.color = disconnectedWireColor;
+                lineRenderer.material.color = disconnectedWireColor;
+                connectedWirePointTransform = null;
+
+                UpdateWire(newPosition);
+            }
         }
+
+        if(connectedWirePoint != null && connectedWirePoint.voltageValueCannotBeChanged == false)
+        {
+            connectedWirePoint.wirePointVoltage = wirePoint.wirePointVoltage;
+        }
+
+        if(connectedWirePoint != null)
+        {
+            connectedWirePoint.wirePointCurrent = wirePoint.wirePointCurrent;
+        }
+
+        //Debug.Log(connectedWirePoint == null);
+    }
+
+    private IEnumerator IgnoreTouchInput(float delay)
+    {
+        ignoreInput = true;
+        yield return new WaitForSeconds(delay);
+        ignoreInput = false;
     }
 
     protected override void OnPressCancel()
@@ -127,6 +238,16 @@ public class ExtendibleWire : PressInputBase
         {
             lineRenderer.SetPosition(i, points[i].position);
         }
+    }
+
+    private void UpdateLineWidth()
+    {
+        // Determine the axis responsible for the wire's thickness
+        float wireThickness = transform.lossyScale.y / 50; // Assuming the wire's thickness corresponds to the y-axis scale
+
+        // Update the LineRenderer width to exactly match the wire's scale
+        lineRenderer.startWidth = wireThickness;
+        lineRenderer.endWidth = wireThickness;
     }
 
     public void UpdateWire(Vector3 newPosition)
@@ -149,15 +270,16 @@ public class ExtendibleWire : PressInputBase
         /// This was purely done for visual purposes
         /// </ summary >
 
-        else if (!((startingPoint - newPosition).magnitude <= positionClampThreshold))
+        //else if (!((startingPoint - newPosition).magnitude <= positionClampThreshold))
+        else
         {
             moving.position = newPosition; // Update wireEnd position
         }
 
-        else
+/*        else
         {
             moving.position = movingStartingPosition;
-        }
+        }*/
 
         // Calculate direction from the starting point to the new position
         Vector3 direction = newPosition - startingPoint;
@@ -168,5 +290,26 @@ public class ExtendibleWire : PressInputBase
             Quaternion targetRotation = Quaternion.LookRotation(direction);
             transform.rotation = targetRotation;
         }
+    }
+
+    private void OnScaleEnable()
+    {
+        // Subscribe to the event when the script is enabled
+        ScaleAndRotateSlider.OnScaleChanged += OnScaleChanged;
+    }
+
+    private void OnScaleDisable()
+    {
+        // Unsubscribe from the event when the script is disabled
+        ScaleAndRotateSlider.OnScaleChanged -= OnScaleChanged;
+    }
+
+    private void OnScaleChanged()
+    {
+        // Update the starting position when scaling occurs
+        movingStartingPosition = moving.position;
+        startingPoint = wirePointTransform.position;
+        positionClampThreshold = (movingStartingPosition - wirePointTransform.position).magnitude;
+        UpdateLineWidth();
     }
 }

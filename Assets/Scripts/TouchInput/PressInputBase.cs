@@ -30,6 +30,14 @@ public abstract class PressInputBase : MonoBehaviour
             {
                 OnPress(device.position.ReadValue());
             }
+
+            // Check for two touches.
+            if (Touchscreen.current != null && Touchscreen.current.touches.Count >= 2)
+            {
+                var touch1 = Touchscreen.current.touches[0].position.ReadValue();
+                var touch2 = Touchscreen.current.touches[1].position.ReadValue();
+                OnTwoTouches(touch1, touch2);
+            }
         };
 
         // If the existing touch is stopped or canceled, call the OnPressCancel function.
@@ -60,4 +68,11 @@ public abstract class PressInputBase : MonoBehaviour
     protected virtual void OnPressBegan(Vector3 position) { }
 
     protected virtual void OnPressCancel() { }
+
+    /// <summary>
+    /// Called when two touches are detected simultaneously.
+    /// </summary>
+    /// <param name="touch1">Position of the first touch.</param>
+    /// <param name="touch2">Position of the second touch.</param>
+    protected virtual void OnTwoTouches(Vector2 touch1, Vector2 touch2) { }
 }

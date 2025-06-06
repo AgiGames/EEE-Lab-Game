@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6044398423152438732}
   - component: {fileID: 5686194664579305754}
   - component: {fileID: 7551971755459895839}
+  - component: {fileID: 8233783552183388012}
   m_Layer: 0
   m_Name: WirePoint
   m_TagString: Untagged
@@ -108,3 +109,22 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &8233783552183388012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4366455677805272112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4238d8c031dbac24fb463537606cbb40, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  preLinked: 0
+  nextConnection: {fileID: 0}
+  voltageValueCannotBeChanged: 0
+  wirePointVoltage: -1
+  wirePointResistance: 0
+  numInputConnections: 0
+  wirePointCurrent: 0
